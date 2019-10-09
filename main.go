@@ -57,16 +57,16 @@ func workQueue(ctx context.Context) {
 		if job == nil {
 			return
 		}
-		processJob(job)
+		processJob(ctx, job)
 	}
 }
 
-func processJob(job creamqueue.QueuedJob) {
+func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	jobData := job.Data()
 	url := jobData.URL
 	wrapper := ytdlwrapper.Make()
 
-	info, err := wrapper.Info(url)
+	info, err := wrapper.Info(ctx, url)
 	if err != nil {
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,
@@ -89,7 +89,7 @@ func processJob(job creamqueue.QueuedJob) {
 		return
 	}
 
-	outputFilenameBytes, err := wrapper.Download(info.Entry.URL, "--get-filename", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", string(job.ID())+".%(ext)s")
+	outputFilenameBytes, err := wrapper.Download(ctx, info.Entry.URL, "--get-filename", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", string(job.ID())+".%(ext)s")
 	if err != nil {
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,
@@ -101,7 +101,7 @@ func processJob(job creamqueue.QueuedJob) {
 	defer os.Remove(outputFilename)
 	defer os.Remove(outputFilename + ".part")
 
-	_, err = wrapper.Download(info.Entry.URL, "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)
+	_, err = wrapper.Download(ctx, info.Entry.URL, "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)
 	if err != nil {
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,

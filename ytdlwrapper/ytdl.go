@@ -1,6 +1,7 @@
 package ytdlwrapper
 
 import (
+	"context"
 	"encoding/json"
 	"os/exec"
 )
@@ -12,8 +13,8 @@ type Wrapper struct {
 
 // Info returns information about the URL, like if it is
 // a playlist or a single video.
-func (wrapper *Wrapper) Info(url string) (*InfoOutput, error) {
-	output, err := exec.Command(wrapper.BinPath, "-J", url).Output()
+func (wrapper *Wrapper) Info(ctx context.Context, url string) (*InfoOutput, error) {
+	output, err := exec.CommandContext(ctx, wrapper.BinPath, "-J", url).Output()
 	if err != nil {
 		return nil, err
 	}
@@ -37,15 +38,15 @@ func (wrapper *Wrapper) Info(url string) (*InfoOutput, error) {
 }
 
 // Update youtube-dl
-func (wrapper *Wrapper) Update() error {
-	_, err := exec.Command(wrapper.BinPath, "-U").Output()
+func (wrapper *Wrapper) Update(ctx context.Context) error {
+	_, err := exec.CommandContext(ctx, wrapper.BinPath, "-U").Output()
 	return err
 }
 
 // Download the given URL using youtube-dl
-func (wrapper *Wrapper) Download(url string, args ...string) ([]byte, error) {
+func (wrapper *Wrapper) Download(ctx context.Context, url string, args ...string) ([]byte, error) {
 	args = append(args, url)
-	return exec.Command(wrapper.BinPath, args...).Output()
+	return exec.CommandContext(ctx, wrapper.BinPath, args...).Output()
 }
 
 // Make a default instance of the youtube-dl wrapper

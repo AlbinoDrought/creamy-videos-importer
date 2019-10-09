@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/AlbinoDrought/creamy-videos-importer/autoid"
 	"github.com/AlbinoDrought/creamy-videos-importer/creamqueue"
@@ -19,27 +20,51 @@ var queue creamqueue.Queue
 var idGenerator autoid.AutoID
 var creamyVideosHost string
 var parallelWorkers int
+var jobRepo *jobRepository
 
 func main() {
 	queue = creamqueue.MakeBarebonesQueue()
 	idGenerator = autoid.Make()
+	jobRepo = makeJobRepository()
 	creamyVideosHost = "http://localhost:3000/"
 	parallelWorkers = 3
 
 	queue.OnFinished(func(id creamqueue.JobID, data creamqueue.JobData, result creamqueue.JobResult) {
 		log.Println("finished", id, data.URL, result.Title, result.CreamyURL)
+		jobRepo.Update(id, func(job *jobInformation) {
+			job.StoppedAt = time.Now()
+			job.Status = "finished"
+			job.Data = data
+			job.Result = result
+		})
 	})
 
 	queue.OnFailed(func(id creamqueue.JobID, data creamqueue.JobData, failures []creamqueue.JobFailure) {
 		log.Println("failed", id, data.URL, failures)
+		jobRepo.Update(id, func(job *jobInformation) {
+			job.StoppedAt = time.Now()
+			job.Status = "failed"
+			job.Data = data
+			job.Failures = failures
+		})
 	})
 
 	queue.OnStarted(func(id creamqueue.JobID, data creamqueue.JobData) {
 		log.Println("started", id, data.URL)
+		jobRepo.Update(id, func(job *jobInformation) {
+			job.StartedAt = time.Now()
+			job.Status = "started"
+			job.Data = data
+		})
 	})
 
 	queue.OnQueued(func(id creamqueue.JobID, data creamqueue.JobData) {
 		log.Println("queued", id, data.URL)
+		jobRepo.Store(id, func(job *jobInformation) {
+			job.CreatedAt = time.Now()
+			job.Status = "waiting"
+			job.Data = data
+		})
 	})
 
 	ctx, cancel := context.WithCancel(context.Background())

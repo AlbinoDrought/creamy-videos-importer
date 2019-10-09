@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 
 	"github.com/AlbinoDrought/creamy-videos-importer/autoid"
 	"github.com/AlbinoDrought/creamy-videos-importer/creamqueue"
@@ -29,7 +30,20 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	gracefulWaitGroup := sync.WaitGroup{}
+	gracefulShutdownComplete := make(chan bool, 1)
+
 	workersFinished := bootQueue(ctx)
+	gracefulWaitGroup.Add(1)
+	go func() {
+		<-workersFinished
+		gracefulWaitGroup.Done()
+	}()
+
+	go func() {
+		gracefulWaitGroup.Wait()
+		gracefulShutdownComplete <- true
+	}()
 
 	queue.Push(idGenerator.Next(), creamqueue.JobData{
 		URL: "https://www.youtube.com/playlist?list=PLkxPfMNWejkdjjBA4PruQz5oyPIxCfeF7",
@@ -41,14 +55,14 @@ func main() {
 
 	for {
 		select {
-		case <-workersFinished:
-			log.Println("All workers finished, bye!")
+		case <-gracefulShutdownComplete:
+			log.Println("Graceful shutdown finished, bye!")
 			return
 		case <-c:
 			if firstInterrupt {
-				log.Println("Interrupt received, waiting for workers to finish cleanly")
 				firstInterrupt = false
 				cancel()
+				log.Println("Interrupt received, initiated graceful shutdown")
 			} else {
 				log.Println("Performing unclean shutdown")
 				return

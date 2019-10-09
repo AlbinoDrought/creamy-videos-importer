@@ -55,10 +55,6 @@ func main() {
 		gracefulShutdownComplete <- true
 	}()
 
-	queue.Push(idGenerator.Next(), creamqueue.JobData{
-		URL: "https://www.youtube.com/playlist?list=PLkxPfMNWejkdjjBA4PruQz5oyPIxCfeF7",
-	})
-
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	firstInterrupt := true

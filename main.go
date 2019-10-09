@@ -5,18 +5,22 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/AlbinoDrought/creamy-videos-importer/autoid"
 	"github.com/AlbinoDrought/creamy-videos-importer/creamqueue"
+	"github.com/AlbinoDrought/creamy-videos-importer/creamyvideos"
 	"github.com/AlbinoDrought/creamy-videos-importer/ytdlwrapper"
 )
 
 var queue creamqueue.Queue
 var idGenerator autoid.AutoID
+var creamyVideosHost string
 
 func main() {
 	queue = creamqueue.MakeBarebonesQueue()
 	idGenerator = autoid.Make()
+	creamyVideosHost = "http://localhost:3000/"
 
 	queue.OnFinished(func(id creamqueue.JobID, data creamqueue.JobData, result creamqueue.JobResult) {
 		log.Println("finished", id, data.URL, result.Title, result.CreamyURL)
@@ -58,7 +62,8 @@ func workQueue(ctx context.Context) {
 }
 
 func processJob(job creamqueue.QueuedJob) {
-	url := job.Data().URL
+	jobData := job.Data()
+	url := jobData.URL
 	wrapper := ytdlwrapper.Make()
 
 	info, err := wrapper.Info(url)
@@ -84,14 +89,6 @@ func processJob(job creamqueue.QueuedJob) {
 		return
 	}
 
-	_, err = wrapper.Download(info.Entry.URL, "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", string(job.ID())+".%(ext)s")
-	if err != nil {
-		job.Failed(&creamqueue.JobFailure{
-			Error: err,
-		})
-		return
-	}
-
 	outputFilenameBytes, err := wrapper.Download(info.Entry.URL, "--get-filename", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", string(job.ID())+".%(ext)s")
 	if err != nil {
 		job.Failed(&creamqueue.JobFailure{
@@ -100,11 +97,72 @@ func processJob(job creamqueue.QueuedJob) {
 		return
 	}
 
-	outputFilename := string(outputFilenameBytes)
+	outputFilename := strings.TrimSpace(string(outputFilenameBytes))
 	defer os.Remove(outputFilename)
+	defer os.Remove(outputFilename + ".part")
+
+	_, err = wrapper.Download(info.Entry.URL, "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)
+	if err != nil {
+		job.Failed(&creamqueue.JobFailure{
+			Error: err,
+		})
+		return
+	}
+
+	title := info.Entry.Title
+	if title == "" {
+		title = "Import of " + url
+	}
+
+	description := "Original URL: " + url
+	if info.Entry.Description != "" {
+		description += "\n\n" + info.Entry.Description
+	}
+
+	tags := []string{"importer:cvi"}
+
+	if info.Entry.Extractor != "" {
+		tags = append(tags, "extractor:"+info.Entry.Extractor)
+
+		if info.Entry.ChannelID != "" {
+			tags = append(tags, fmt.Sprintf("%v-channel:%v", info.Entry.Extractor, info.Entry.ChannelID))
+		}
+
+		if info.Entry.UploaderID != "" {
+			tags = append(tags, fmt.Sprintf("%v-uploader:%v", info.Entry.Extractor, info.Entry.UploaderID))
+		}
+
+		if info.Entry.ID != "" {
+			tags = append(tags, fmt.Sprintf("%v-id:%v", info.Entry.Extractor, info.Entry.ID))
+		}
+	}
+
+	if jobData.ParentPlaylistID != "" {
+		if jobData.ParentPlaylistExtractor != "" {
+			extractor := strings.Replace(jobData.ParentPlaylistExtractor, ":playlist", "", -1)
+			tags = append(tags, fmt.Sprintf("%v-playlist:%v", extractor, jobData.ParentPlaylistID))
+		} else {
+			tags = append(tags, "imported-playlist:"+jobData.ParentPlaylistID)
+		}
+	}
+
+	result, err := creamyvideos.Upload(
+		creamyVideosHost,
+		outputFilename,
+		title,
+		description,
+		tags,
+	)
+
+	if err != nil {
+		job.Failed(&creamqueue.JobFailure{
+			Error: err,
+		})
+		return
+	}
 
 	job.Finished(&creamqueue.JobResult{
 		Title:     info.Entry.Title,
-		CreamyURL: "none because PoC",
+		CreamyURL: result.URL,
 	})
 }

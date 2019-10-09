@@ -40,6 +40,16 @@ func main() {
 		gracefulWaitGroup.Done()
 	}()
 
+	serverFinished := bootServer(ctx)
+	gracefulWaitGroup.Add(1)
+	go func() {
+		err := <-serverFinished
+		if err != nil {
+			log.Println("server exited with error", err)
+		}
+		gracefulWaitGroup.Done()
+	}()
+
 	go func() {
 		gracefulWaitGroup.Wait()
 		gracefulShutdownComplete <- true

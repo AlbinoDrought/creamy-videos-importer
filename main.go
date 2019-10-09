@@ -71,7 +71,9 @@ func processJob(job creamqueue.QueuedJob) {
 	if info.IsPlaylist {
 		for _, entry := range info.Playlist.Entries {
 			queue.Push(idGenerator.Next(), creamqueue.JobData{
-				URL: entry.URL,
+				URL:                     entry.URL,
+				ParentPlaylistID:        info.Playlist.ID,
+				ParentPlaylistExtractor: info.Playlist.Extractor,
 			})
 		}
 

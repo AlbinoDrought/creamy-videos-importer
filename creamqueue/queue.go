@@ -8,6 +8,9 @@ type JobID string
 // JobData contains the arguments to begin processing our job
 type JobData struct {
 	URL string
+
+	ParentPlaylistID        string
+	ParentPlaylistExtractor string
 }
 
 // JobResult is the output data of successfully processing a job

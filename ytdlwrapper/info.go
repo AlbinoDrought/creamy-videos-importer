@@ -14,8 +14,9 @@ type Entry struct {
 
 // A Playlist is a list of entries
 type Playlist struct {
-	ID      string  `json:"id"`
-	Entries []Entry `json:"entries"`
+	ID        string  `json:"id"`
+	Extractor string  `json:"extractor"`
+	Entries   []Entry `json:"entries"`
 }
 
 // InfoOutput represents the JSON returned by `youtube-dl -J`.

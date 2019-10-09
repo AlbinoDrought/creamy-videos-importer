@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 
 	"github.com/AlbinoDrought/creamy-videos-importer/autoid"
 	"github.com/AlbinoDrought/creamy-videos-importer/creamqueue"
@@ -18,6 +19,7 @@ var jobRepo *jobRepository
 var config = struct {
 	creamyVideosHost string
 	parallelWorkers  int
+	keepJobsFor      time.Duration
 }{}
 
 func main() {
@@ -27,6 +29,7 @@ func main() {
 
 	config.creamyVideosHost = "http://localhost:3000/"
 	config.parallelWorkers = 3
+	config.keepJobsFor = time.Hour
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -48,6 +51,24 @@ func main() {
 			log.Println("server exited with error", err)
 		}
 		gracefulWaitGroup.Done()
+	}()
+
+	go func() {
+		gracefulWaitGroup.Add(1)
+		defer gracefulWaitGroup.Done()
+		ticker := time.NewTicker(config.keepJobsFor / 4)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				purgedJobs := jobRepo.PurgeStopped(config.keepJobsFor)
+				if purgedJobs > 0 {
+					log.Println("purged", purgedJobs, "jobs")
+				}
+			}
+		}
 	}()
 
 	go func() {

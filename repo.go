@@ -76,6 +76,31 @@ func (repo *jobRepository) Remove(id creamqueue.JobID) {
 	delete(repo.jobs, id)
 }
 
+func (repo *jobRepository) PurgeStopped(olderThan time.Duration) int {
+	ids := []creamqueue.JobID{}
+
+	repo.lock.RLock()
+	for id, job := range repo.jobs {
+		job.lock.RLock()
+		if job.StoppedAt.IsZero() {
+			job.lock.RUnlock()
+			continue
+		}
+
+		if job.StoppedAt.Add(olderThan).Before(time.Now()) {
+			ids = append(ids, id)
+		}
+		job.lock.RUnlock()
+	}
+	repo.lock.RUnlock()
+
+	for _, id := range ids {
+		repo.Remove(id)
+	}
+
+	return len(ids)
+}
+
 func (repo *jobRepository) Stats() map[string]int {
 	repo.lock.RLock()
 	defer repo.lock.RUnlock()

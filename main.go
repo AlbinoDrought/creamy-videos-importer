@@ -18,16 +18,26 @@ var jobRepo *jobRepository
 
 var config = struct {
 	creamyVideosHost string
+	port             string
 	parallelWorkers  int
 	keepJobsFor      time.Duration
 }{}
+
+func envDefault(name string, backup string) string {
+	found, exists := os.LookupEnv(name)
+	if exists {
+		return found
+	}
+	return backup
+}
 
 func main() {
 	queue = creamqueue.MakeBarebonesQueue()
 	idGenerator = autoid.Make()
 	jobRepo = makeJobRepository()
 
-	config.creamyVideosHost = "http://localhost:3000/"
+	config.creamyVideosHost = envDefault("CREAMY_VIDEOS_HOST", "http://localhost:3000/")
+	config.port = envDefault("CREAMY_HTTP_PORT", "4000")
 	config.parallelWorkers = 3
 	config.keepJobsFor = time.Hour
 

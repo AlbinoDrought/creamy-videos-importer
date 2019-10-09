@@ -217,13 +217,14 @@ func bootServer(ctx context.Context) chan error {
 	})
 
 	src := &http.Server{
-		Addr:    ":4000",
+		Addr:    ":" + config.port,
 		Handler: router,
 	}
 
 	errorChannel := make(chan error, 1)
 
 	go func() {
+		log.Println("listening on", src.Addr)
 		errorChannel <- src.ListenAndServe()
 	}()
 

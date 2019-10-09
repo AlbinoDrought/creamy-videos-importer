@@ -64,7 +64,7 @@ const rawTemplateViewJobs = `
 	<body>
 		<form method="POST" id="queueForm">
 			<label for="url">URL</label>
-			<input type="text" name="url">
+			<input type="text" name="url" id="urlInput">
 
 			<button type="submit">Queue</button>
 		</form>
@@ -115,6 +115,31 @@ const rawTemplateViewJobs = `
 					</tr>
 				{{ end }}
 			</tbody>
+
+			<script type="text/javascript">
+				var urlInput = document.getElementById('urlInput');
+				
+				if (localStorage) {
+					var lastUrlInput = localStorage.getItem('url');
+					if (lastUrlInput) {
+						urlInput.value = lastUrlInput;
+						localStorage.removeItem('url');
+					}
+				}
+
+				setInterval(function () {
+					if (document.activeElement === urlInput) {
+						// do not refresh if user is typing a URL
+						return;
+					}
+
+					if (localStorage) {
+						localStorage.setItem('url', urlInput.value);
+					}
+
+					window.location.reload();
+				}, 5000);
+			</script>
 	</body>
 </html>
 `

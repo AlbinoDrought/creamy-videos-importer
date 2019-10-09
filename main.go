@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
+	"sync"
 
 	"github.com/AlbinoDrought/creamy-videos-importer/autoid"
 	"github.com/AlbinoDrought/creamy-videos-importer/creamqueue"
@@ -16,11 +18,13 @@ import (
 var queue creamqueue.Queue
 var idGenerator autoid.AutoID
 var creamyVideosHost string
+var parallelWorkers int
 
 func main() {
 	queue = creamqueue.MakeBarebonesQueue()
 	idGenerator = autoid.Make()
 	creamyVideosHost = "http://localhost:3000/"
+	parallelWorkers = 3
 
 	queue.OnFinished(func(id creamqueue.JobID, data creamqueue.JobData, result creamqueue.JobResult) {
 		log.Println("finished", id, data.URL, result.Title, result.CreamyURL)
@@ -38,16 +42,47 @@ func main() {
 		log.Println("queued", id, data.URL)
 	})
 
-	ctx := context.Background()
-	for i := 0; i < 3; i++ {
-		go workQueue(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	workerWaitGroup := sync.WaitGroup{}
+	for i := 0; i < parallelWorkers; i++ {
+		workerWaitGroup.Add(1)
+		go func() {
+			workQueue(ctx)
+			workerWaitGroup.Done()
+		}()
 	}
+
+	workersFinished := make(chan bool, 1)
+	go func() {
+		workerWaitGroup.Wait()
+		workersFinished <- true
+	}()
 
 	queue.Push(idGenerator.Next(), creamqueue.JobData{
 		URL: "https://www.youtube.com/playlist?list=PLkxPfMNWejkdjjBA4PruQz5oyPIxCfeF7",
 	})
 
-	fmt.Scanln()
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	firstInterrupt := true
+
+	for {
+		select {
+		case <-workersFinished:
+			log.Println("All workers finished, bye!")
+			return
+		case <-c:
+			if firstInterrupt {
+				log.Println("Interrupt received, waiting for workers to finish cleanly")
+				firstInterrupt = false
+				cancel()
+			} else {
+				log.Println("Performing unclean shutdown")
+				return
+			}
+		}
+	}
 }
 
 func workQueue(ctx context.Context) {

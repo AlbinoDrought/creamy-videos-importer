@@ -66,6 +66,7 @@ func processJob(job creamqueue.QueuedJob) {
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,
 		})
+		return
 	}
 
 	if info.IsPlaylist {

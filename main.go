@@ -133,7 +133,11 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	}
 
 	outputFilename := strings.TrimSpace(string(outputFilenameBytes))
+
+	// cleanup any files now, and also queue their cleanup for later:
+	os.Remove(outputFilename)
 	defer os.Remove(outputFilename)
+	os.Remove(outputFilename + ".part")
 	defer os.Remove(outputFilename + ".part")
 
 	_, err = wrapper.Download(ctx, info.Entry.URL, "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)

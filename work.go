@@ -112,7 +112,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	}
 
 	result, err := creamyvideos.Upload(
-		creamyVideosHost,
+		config.creamyVideosHost,
 		outputFilename,
 		title,
 		description,

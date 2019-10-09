@@ -14,16 +14,20 @@ import (
 
 var queue creamqueue.Queue
 var idGenerator autoid.AutoID
-var creamyVideosHost string
-var parallelWorkers int
 var jobRepo *jobRepository
+
+var config = struct {
+	creamyVideosHost string
+	parallelWorkers  int
+}{}
 
 func main() {
 	queue = creamqueue.MakeBarebonesQueue()
 	idGenerator = autoid.Make()
 	jobRepo = makeJobRepository()
-	creamyVideosHost = "http://localhost:3000/"
-	parallelWorkers = 3
+
+	config.creamyVideosHost = "http://localhost:3000/"
+	config.parallelWorkers = 3
 
 	queue.OnFinished(func(id creamqueue.JobID, data creamqueue.JobData, result creamqueue.JobResult) {
 		log.Println("finished", id, data.URL, result.Title, result.CreamyURL)
@@ -66,7 +70,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	workerWaitGroup := sync.WaitGroup{}
-	for i := 0; i < parallelWorkers; i++ {
+	for i := 0; i < config.parallelWorkers; i++ {
 		workerWaitGroup.Add(1)
 		go func() {
 			workQueue(ctx)

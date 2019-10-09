@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"sort"
 	"time"
+
+	"github.com/AlbinoDrought/creamy-videos-importer/creamqueue"
 )
 
 const rawTemplateViewJobs = `
@@ -24,6 +26,20 @@ const rawTemplateViewJobs = `
 		}
 		a, a:visited {
 			color: mediumaquamarine;
+		}
+
+		#queueForm {
+			display: flex;
+			flex-direction: row;
+		}
+		input {
+			flex: 1;
+			margin: 0 1em;
+			outline: none;
+			width: 100%;
+			border: 1px solid rgba(34, 36, 38, 0.15);
+			background-color: rgba(255, 255, 255, 0.1);
+			color: white;
 		}
 
 		table {
@@ -46,6 +62,12 @@ const rawTemplateViewJobs = `
 		</style>
 	</head>
 	<body>
+		<form method="POST" id="queueForm">
+			<label for="url">URL</label>
+			<input type="text" name="url">
+
+			<button type="submit">Queue</button>
+		</form>
 		<table>
 			<thead>
 				<tr>
@@ -142,9 +164,31 @@ func handlerViewJobs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handlerCreateJob(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(400)
+		w.Write([]byte("bad data"))
+		return
+	}
+
+	url := r.FormValue("url")
+	if url == "" {
+		w.WriteHeader(422)
+		w.Write([]byte("missing \"url\" value"))
+		return
+	}
+
+	queue.Push(idGenerator.Next(), creamqueue.JobData{
+		URL: url,
+	})
+
+	http.Redirect(w, r, "/", 302)
+}
+
 func bootServer(ctx context.Context) chan error {
 	router := makeRouter([]routeDef{
 		routeDef{"GET", "/", "ViewJobs", handlerViewJobs},
+		routeDef{"POST", "/", "CreateJob", handlerCreateJob},
 	})
 
 	src := &http.Server{

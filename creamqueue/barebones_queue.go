@@ -34,7 +34,8 @@ func (job *barebonesJob) Failed(failure *JobFailure) {
 }
 
 type barebonesQueue struct {
-	jobs chan *barebonesJob
+	jobs         chan *barebonesJob
+	priorityJobs chan *barebonesJob
 
 	handlerLock      sync.Locker
 	queuedHandlers   []OnQueuedHandler
@@ -89,7 +90,7 @@ func (queue *barebonesQueue) triggerFailed(job *barebonesJob, failure *JobFailur
 	if job.attempts < job.maxAttempts {
 		job.attempts++
 		job.failures = append(job.failures, *failure)
-		go queue.pushToQueue(job)
+		go queue.pushToPriorityQueue(job)
 		return
 	}
 
@@ -100,6 +101,10 @@ func (queue *barebonesQueue) triggerFailed(job *barebonesJob, failure *JobFailur
 
 func (queue *barebonesQueue) pushToQueue(job *barebonesJob) {
 	queue.jobs <- job
+}
+
+func (queue *barebonesQueue) pushToPriorityQueue(job *barebonesJob) {
+	queue.priorityJobs <- job
 }
 
 func (queue *barebonesQueue) Push(id JobID, data JobData) {
@@ -119,22 +124,31 @@ func (queue *barebonesQueue) Push(id JobID, data JobData) {
 }
 
 func (queue *barebonesQueue) Pull(ctx context.Context) QueuedJob {
+	var job *barebonesJob
+
 	select {
 	case <-ctx.Done():
 		return nil
-	case job := <-queue.jobs:
-		if !job.previouslyPulled {
-			queue.triggerStarted(job)
-			job.previouslyPulled = true
-		}
-		return job
+	// prefer the priority queue:
+	case job = <-queue.priorityJobs:
+		break
+	case job = <-queue.jobs:
+		break
 	}
+
+	if !job.previouslyPulled {
+		queue.triggerStarted(job)
+		job.previouslyPulled = true
+	}
+
+	return job
 }
 
 // MakeBarebonesQueue returns a perfectly valid and working Queue instance :^)
 func MakeBarebonesQueue() Queue {
 	return &barebonesQueue{
 		jobs:             make(chan *barebonesJob),
+		priorityJobs:     make(chan *barebonesJob),
 		handlerLock:      &sync.Mutex{},
 		queuedHandlers:   []OnQueuedHandler{},
 		startedHandlers:  []OnStartedHandler{},

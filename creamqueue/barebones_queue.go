@@ -108,7 +108,7 @@ func (queue *barebonesQueue) Push(id JobID, data JobData) {
 		queue: queue,
 
 		attempts:    0,
-		maxAttempts: 3,
+		maxAttempts: 2,
 		failures:    []JobFailure{},
 
 		data: &data,

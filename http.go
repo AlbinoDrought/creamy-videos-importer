@@ -48,6 +48,15 @@ const rawTemplateViewJobs = `
 			flex: 1;
 		}
 
+		.tags { margin-top: 1em; }
+		.tag {
+			background-color: #ababab;
+			color: #1b1b1b;
+			font-size: smaller;
+			border-radius: 0.25em;
+			padding: 0.25em;
+		}
+
 		table {
 			width: 100%;
 		}
@@ -92,6 +101,14 @@ const rawTemplateViewJobs = `
 							<a href="{{ $element.Data.URL }}">
 								{{ $element.Data.URL }}
 							</a>
+
+							{{ if $element.Data.Tags }}
+								<div class="tags">
+									{{ range $tag := $element.Data.Tags }}
+										<span class="tag">{{ $tag }}</span>
+									{{ end }}
+								</div>
+							{{ end }}
 
 							{{ if (eq $element.Status "finished") }}
 								<br>

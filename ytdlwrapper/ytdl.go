@@ -14,7 +14,7 @@ type Wrapper struct {
 // Info returns information about the URL, like if it is
 // a playlist or a single video.
 func (wrapper *Wrapper) Info(ctx context.Context, url string) (*InfoOutput, error) {
-	output, err := exec.CommandContext(ctx, wrapper.BinPath, "-J", url).Output()
+	output, err := exec.CommandContext(ctx, wrapper.BinPath, "-J", "--flat-playlist", url).Output()
 	if err != nil {
 		return nil, err
 	}

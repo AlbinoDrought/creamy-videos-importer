@@ -38,7 +38,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	if info.IsPlaylist {
 		for _, entry := range info.Playlist.Entries {
 			queue.Push(idGenerator.Next(), creamqueue.JobData{
-				URL:                     entry.URL,
+				URL:                     entry.BestURL(),
 				ParentPlaylistID:        info.Playlist.ID,
 				ParentPlaylistExtractor: info.Playlist.Extractor,
 			})
@@ -50,7 +50,9 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 		return
 	}
 
-	outputFilenameBytes, err := wrapper.Download(ctx, info.Entry.URL, "--get-filename", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", string(job.ID())+".%(ext)s")
+	entryURL := info.Entry.BestURL()
+
+	outputFilenameBytes, err := wrapper.Download(ctx, entryURL, "--get-filename", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", string(job.ID())+".%(ext)s")
 	if err != nil {
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,
@@ -66,7 +68,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	os.Remove(outputFilename + ".part")
 	defer os.Remove(outputFilename + ".part")
 
-	_, err = wrapper.Download(ctx, info.Entry.URL, "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)
+	_, err = wrapper.Download(ctx, entryURL, "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)
 	if err != nil {
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,

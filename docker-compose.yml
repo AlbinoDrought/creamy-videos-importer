@@ -1,0 +1,14 @@
+version: '2'
+
+services:
+  videos:
+    image: albinodrought/creamy-videos
+    ports:
+      - "3000:3000"
+  
+  importer:
+    build: .
+    environment:
+      - CREAMY_VIDEOS_HOST=http://videos:3000/
+    ports:
+      - "4000:4000"

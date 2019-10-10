@@ -28,7 +28,7 @@ const rawTemplateViewJobs = `
 			color: mediumaquamarine;
 		}
 
-		#queueForm {
+		form {
 			display: flex;
 			flex-direction: row;
 		}
@@ -62,9 +62,9 @@ const rawTemplateViewJobs = `
 		</style>
 	</head>
 	<body>
-		<form method="POST" id="queueForm">
+		<form method="POST">
 			<label for="url">URL</label>
-			<input type="text" name="url" id="urlInput">
+			<input type="text" name="url">
 
 			<button type="submit">Queue</button>
 		</form>

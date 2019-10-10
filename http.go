@@ -118,28 +118,33 @@ const rawTemplateViewJobs = `
 		</table>
 
 		<script type="text/javascript">
-			var urlInput = document.getElementById('urlInput');
-			
-			if (localStorage) {
-				var lastUrlInput = localStorage.getItem('url');
-				if (lastUrlInput) {
-					urlInput.value = lastUrlInput;
-					localStorage.removeItem('url');
-				}
+			if (fetch) {
+				var fetching = false;
+				var localTable = document.querySelector('table');
+
+				setInterval(function () {
+					if (fetching) {
+						return;
+					}
+
+					fetch('/?autofetch').then(function (resp) {
+						return resp.text();
+					}).then(function (text) {
+						var el = document.createElement('html');
+						el.innerHTML = text;
+
+						var remoteTable = el.querySelector('table');
+						if (localTable && remoteTable) {
+							localTable.innerHTML = remoteTable.innerHTML;
+						}
+
+						fetching = false;
+					}).catch(function (ex) {
+						console.error('error fetching', ex);
+						fetching = false;
+					})
+				}, 5000);
 			}
-
-			setInterval(function () {
-				if (document.activeElement === urlInput) {
-					// do not refresh if user is typing a URL
-					return;
-				}
-
-				if (localStorage) {
-					localStorage.setItem('url', urlInput.value);
-				}
-
-				window.location.reload();
-			}, 5000);
 		</script>
 	</body>
 </html>

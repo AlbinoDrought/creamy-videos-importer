@@ -25,6 +25,7 @@ func workQueue(ctx context.Context) {
 func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	jobData := job.Data()
 	url := jobData.URL
+	tags := jobData.Tags
 	wrapper := ytdlwrapper.Make()
 
 	info, err := wrapper.Info(ctx, url)
@@ -39,6 +40,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 		for _, entry := range info.Playlist.Entries {
 			queue.Push(idGenerator.Next(), creamqueue.JobData{
 				URL:                     entry.BestURL(),
+				Tags:                    tags,
 				ParentPlaylistID:        info.Playlist.ID,
 				ParentPlaylistExtractor: info.Playlist.Extractor,
 			})
@@ -86,7 +88,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 		description += "\n\n" + info.Entry.Description
 	}
 
-	tags := []string{"importer:cvi"}
+	tags = append(tags, "importer:cvi")
 
 	if info.Entry.Extractor != "" {
 		tags = append(tags, "extractor:"+info.Entry.Extractor)

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/AlbinoDrought/creamy-videos-importer/creamqueue"
@@ -31,15 +32,20 @@ const rawTemplateViewJobs = `
 		form {
 			display: flex;
 			flex-direction: row;
+			align-items: center;
 		}
-		input {
-			flex: 1;
+		.input {
+			padding: 0.25em;
 			margin: 0 1em;
 			outline: none;
-			width: 100%;
 			border: 1px solid rgba(34, 36, 38, 0.15);
 			background-color: rgba(255, 255, 255, 0.1);
 			color: white;
+		}
+		.input+.input { margin-left: 0; }
+		.input--url {
+			width: 100%;
+			flex: 1;
 		}
 
 		table {
@@ -64,7 +70,8 @@ const rawTemplateViewJobs = `
 	<body>
 		<form method="POST">
 			<label for="url">URL</label>
-			<input type="text" name="url">
+			<input class="input input--url" type="text" name="url" placeholder="https://videos.example.com/video.mp4">
+			<input class="input input--tags" type="text" name="tags" placeholder="food,food:korean">
 
 			<button type="submit">Queue</button>
 		</form>
@@ -209,8 +216,17 @@ func handlerCreateJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	rawTags := r.FormValue("tags")
+	var tags []string
+	if rawTags == "" {
+		tags = []string{}
+	} else {
+		tags = strings.Split(rawTags, ",")
+	}
+
 	queue.Push(idGenerator.Next(), creamqueue.JobData{
-		URL: url,
+		URL:  url,
+		Tags: tags,
 	})
 
 	http.Redirect(w, r, "/", 302)

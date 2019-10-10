@@ -7,7 +7,8 @@ type JobID string
 
 // JobData contains the arguments to begin processing our job
 type JobData struct {
-	URL string
+	URL  string
+	Tags []string
 
 	ParentPlaylistID        string
 	ParentPlaylistExtractor string

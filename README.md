@@ -1,5 +1,6 @@
 # Creamy Videos Importer
 
+<a href="https://travis-ci.org/AlbinoDrought/creamy-videos-importer"><img alt="Travis build status" src="https://img.shields.io/travis/AlbinoDrought/creamy-videos-importer.svg?maxAge=360"></a>
 <a href="https://hub.docker.com/r/albinodrought/creamy-videos-importer">
   <img alt="albinodrought/creamy-videos-importer Docker Pulls" src="https://img.shields.io/docker/pulls/albinodrought/creamy-videos-importer">
 </a>

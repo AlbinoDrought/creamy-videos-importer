@@ -40,7 +40,7 @@ CREAMY_VIDEOS_HOST=https://videos.example.com/ \
 
 ## Firefox Extension
 
-[![Video Thumbnail](./.readme/extension-in-action.png)](./.readme/extension-in-action.webm)
+[![Video Thumbnail](./.readme/extension-in-action.png)](./.readme/extension-in-action.webm?raw=true)
 
 The extension adds an `Import into Creamy Videos` item to the link and page context menus for a streamlined import flow. On desktop versions of Firefox, the added item will show up when right-clicking a link or an empty area on a page.
 

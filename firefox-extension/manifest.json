@@ -1,0 +1,28 @@
+{
+  "manifest_version": 2,
+  "name": "Import to Creamy Videos",
+  "description": "Add a context menu option to send things to creamy-videos-importer.",
+  "version": "1.0",
+  "homepage_url": "https://github.com/AlbinoDrought/creamy-videos-importer",
+  "applications": {
+    "gecko": {
+      "id": "importer-ext@albinodrought.com",
+      "strict_min_version": "57.0"
+    }
+  },
+  "options_ui": {
+    "page": "options.html"
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "notifications",
+    "storage",
+    "<all_urls>"
+  ]
+}

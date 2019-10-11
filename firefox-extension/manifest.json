@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Import to Creamy Videos",
   "description": "Add a context menu option to send things to creamy-videos-importer.",
-  "version": "1.0",
+  "version": "1.1",
   "homepage_url": "https://github.com/AlbinoDrought/creamy-videos-importer",
   "icons": {
     "48": "icon.png",

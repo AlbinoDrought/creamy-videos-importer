@@ -4,6 +4,10 @@
   "description": "Add a context menu option to send things to creamy-videos-importer.",
   "version": "1.0",
   "homepage_url": "https://github.com/AlbinoDrought/creamy-videos-importer",
+  "icons": {
+    "48": "icon.png",
+    "96": "icon@2x.png"
+  },
   "applications": {
     "gecko": {
       "id": "importer-ext@albinodrought.com",

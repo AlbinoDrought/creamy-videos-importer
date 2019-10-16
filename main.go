@@ -63,8 +63,8 @@ func main() {
 		gracefulWaitGroup.Done()
 	}()
 
+	gracefulWaitGroup.Add(1)
 	go func() {
-		gracefulWaitGroup.Add(1)
 		defer gracefulWaitGroup.Done()
 		ticker := time.NewTicker(config.keepJobsFor / 4)
 

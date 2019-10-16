@@ -27,6 +27,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	url := jobData.URL
 	tags := jobData.Tags
 	wrapper := ytdlwrapper.Make()
+	checkForTagMatch := false
 
 	info, err := wrapper.Info(ctx, url)
 	if err != nil {
@@ -48,32 +49,6 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 
 		job.Finished(&creamqueue.JobResult{
 			Title: "Playlist " + info.Playlist.ID,
-		})
-		return
-	}
-
-	entryURL := info.Entry.BestURL()
-
-	outputFilenameBytes, err := wrapper.Download(ctx, entryURL, "--no-playlist", "--get-filename", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", string(job.ID())+".%(ext)s")
-	if err != nil {
-		job.Failed(&creamqueue.JobFailure{
-			Error: err,
-		})
-		return
-	}
-
-	outputFilename := strings.TrimSpace(string(outputFilenameBytes))
-
-	// cleanup any files now, and also queue their cleanup for later:
-	os.Remove(outputFilename)
-	defer os.Remove(outputFilename)
-	os.Remove(outputFilename + ".part")
-	defer os.Remove(outputFilename + ".part")
-
-	_, err = wrapper.Download(ctx, entryURL, "--no-playlist", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)
-	if err != nil {
-		job.Failed(&creamqueue.JobFailure{
-			Error: err,
 		})
 		return
 	}
@@ -103,6 +78,10 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 
 		if info.Entry.ID != "" {
 			tags = append(tags, fmt.Sprintf("%v-id:%v", info.Entry.Extractor, info.Entry.ID))
+			// an extractor ID is assumed to be unique.
+			// if we have information on this, trigger a check for tag matches
+			// so we don't upload a ton of dupes:
+			checkForTagMatch = true
 		}
 	}
 
@@ -113,6 +92,52 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 		} else {
 			tags = append(tags, "imported-playlist:"+jobData.ParentPlaylistID)
 		}
+	}
+
+	// check if an existing video has all of our tags.
+	// if so, use that instead of reimporting ours again.
+	if checkForTagMatch {
+		existingResult, err := creamyvideos.FirstForTags(config.creamyVideosHost, tags)
+		if err != nil {
+			job.Failed(&creamqueue.JobFailure{
+				Error: err,
+			})
+			return
+		}
+
+		if existingResult != nil {
+			job.Finished(&creamqueue.JobResult{
+				Title:     info.Entry.Title,
+				CreamyURL: existingResult.URL,
+			})
+			return
+		}
+	}
+
+	entryURL := info.Entry.BestURL()
+
+	outputFilenameBytes, err := wrapper.Download(ctx, entryURL, "--no-playlist", "--get-filename", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", string(job.ID())+".%(ext)s")
+	if err != nil {
+		job.Failed(&creamqueue.JobFailure{
+			Error: err,
+		})
+		return
+	}
+
+	outputFilename := strings.TrimSpace(string(outputFilenameBytes))
+
+	// cleanup any files now, and also queue their cleanup for later:
+	os.Remove(outputFilename)
+	defer os.Remove(outputFilename)
+	os.Remove(outputFilename + ".part")
+	defer os.Remove(outputFilename + ".part")
+
+	_, err = wrapper.Download(ctx, entryURL, "--no-playlist", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)
+	if err != nil {
+		job.Failed(&creamqueue.JobFailure{
+			Error: err,
+		})
+		return
 	}
 
 	result, err := creamyvideos.Upload(

@@ -12,6 +12,7 @@ import (
 )
 
 const pointUploadVideo = "/api/upload"
+const pointListVideos = "/api/video"
 const pointWatchVideo = "/watch/"
 
 // UploadResult is the result of uploading a video
@@ -74,6 +75,54 @@ func Upload(host, localPath, title, description string, tags []string) (*UploadR
 
 	stringID := strconv.FormatUint(responseBody.ID, 10)
 
+	watchURL, err := point(host, pointWatchVideo+stringID)
+
+	uploadResult := &UploadResult{
+		ID:  stringID,
+		URL: watchURL,
+	}
+
+	return uploadResult, err
+}
+
+// FirstForTags returns the first found video that has all the given tags,
+// nil if none was found, or an error if something really bad happened.
+func FirstForTags(host string, tags []string) (*UploadResult, error) {
+	r := req.New()
+
+	url, err := point(host, pointListVideos)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := r.Get(
+		url,
+		req.QueryParam(map[string]interface{}{
+			"tags":           strings.Join(tags, ","),
+			"sort_field":     "time_created",
+			"sort_direction": "asc",
+		}),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	responseBody := []struct {
+		ID uint64 `json:"id"`
+	}{}
+
+	err = json.NewDecoder(resp.Response().Body).Decode(&responseBody)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(responseBody) == 0 {
+		return nil, nil
+	}
+
+	first := responseBody[0]
+	stringID := strconv.FormatUint(first.ID, 10)
 	watchURL, err := point(host, pointWatchVideo+stringID)
 
 	uploadResult := &UploadResult{

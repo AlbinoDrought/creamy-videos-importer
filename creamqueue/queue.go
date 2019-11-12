@@ -14,6 +14,9 @@ type JobData struct {
 	ParentPlaylistExtractor string
 }
 
+// JobProgress describes the current state of the job
+type JobProgress string
+
 // JobResult is the output data of successfully processing a job
 type JobResult struct {
 	Title     string
@@ -30,6 +33,7 @@ type QueuedJob interface {
 	ID() JobID
 	Data() *JobData
 
+	Progress(progress JobProgress)
 	Finished(result *JobResult)
 	Failed(failure *JobFailure)
 }
@@ -39,6 +43,9 @@ type OnQueuedHandler func(id JobID, data JobData)
 
 // An OnStartedHandler is called when a job is started for the first time
 type OnStartedHandler func(id JobID, data JobData)
+
+// An OnProgressHandler is called every time a job progresses
+type OnProgressHandler func(id JobID, data JobData, progress JobProgress)
 
 // An OnFinishedHandler is called when a job finishes successfully
 type OnFinishedHandler func(id JobID, data JobData, result JobResult)
@@ -50,6 +57,7 @@ type OnFailedHandler func(id JobID, data JobData, failures []JobFailure)
 type Queue interface {
 	OnQueued(handler OnQueuedHandler)
 	OnStarted(handler OnStartedHandler)
+	OnProgress(handler OnProgressHandler)
 	OnFinished(handler OnFinishedHandler)
 	OnFailed(handler OnFailedHandler)
 

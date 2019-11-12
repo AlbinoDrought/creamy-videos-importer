@@ -92,6 +92,19 @@ func Test_parseProgressLine(t *testing.T) {
 				Percent:    "0.7",
 			},
 		},
+		{
+			name: "squiggly test",
+			args: args{
+				line: []byte("[download]   1.2% of ~43.29MiB at  1.52MiB/s ETA 02:11"),
+			},
+			// pretty much all float math errors, but at least it parses properly:
+			want: &DownloadProgress{
+				Downloaded: 544714,
+				TotalSize:  45392855,
+				Speed:      1593835,
+				Percent:    "1.2",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

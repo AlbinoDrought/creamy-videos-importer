@@ -9,6 +9,7 @@ import (
 	"github.com/AlbinoDrought/creamy-videos-importer/creamqueue"
 	"github.com/AlbinoDrought/creamy-videos-importer/creamyvideos"
 	"github.com/AlbinoDrought/creamy-videos-importer/ytdlwrapper"
+	"github.com/dustin/go-humanize"
 )
 
 func workQueue(ctx context.Context) {
@@ -73,9 +74,15 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	os.Remove(outputFilename + ".part")
 	defer os.Remove(outputFilename + ".part")
 
-	job.Progress(creamqueue.JobProgress("Downloading"))
+	job.Progress(creamqueue.JobProgress("Starting download"))
 	progressCallback := func(progress *ytdlwrapper.DownloadProgress) {
-		job.Progress(creamqueue.JobProgress(fmt.Sprintf("Downloaded %v/%v (%v b/s)", progress.Downloaded, progress.TotalSize, progress.Speed)))
+		job.Progress(creamqueue.JobProgress(fmt.Sprintf(
+			"%v%% complete (downloaded %v/%v @ %v/s)",
+			progress.Percent,
+			humanize.Bytes(progress.Downloaded),
+			humanize.Bytes(progress.TotalSize),
+			humanize.Bytes(progress.Speed),
+		)))
 	}
 
 	err = wrapper.DownloadWithProgress(ctx, progressCallback, entryURL, "--no-playlist", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)

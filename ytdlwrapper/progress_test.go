@@ -86,7 +86,7 @@ func Test_parseProgressLine(t *testing.T) {
 			},
 			// pretty much all float math errors, but at least it parses properly:
 			want: &DownloadProgress{
-				Downloaded: 969588849,
+				Downloaded: 9695888,
 				TotalSize:  1385126952,
 				Speed:      12687769,
 				Percent:    "0.7",

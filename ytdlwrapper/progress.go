@@ -49,7 +49,7 @@ func parseProgressLine(line []byte) *DownloadProgress {
 	speed := sizeUnitToBytes(matches[4], matches[5])
 
 	percent, _ := strconv.ParseFloat(string(matches[1]), 32)
-	downloaded := uint64(float64(size) * percent)
+	downloaded := uint64(float64(size)*percent) / 100
 
 	// eta := matches[6]
 

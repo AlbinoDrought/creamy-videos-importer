@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-var progressExpression = regexp.MustCompile(`\[download\]\s+(\d+\.\d)%\s+of\s+(\d+\.\d+)(B|KiB|MiB|GiB|TiB|PiB|EiB|ZiB|YiB)\s+at\s+(\d+\.\d+)(B|KiB|MiB|GiB|TiB|PiB|EiB|ZiB|YiB)\/s\s+ETA\s+(\d\d:\d\d:\d\d|\d\d:\d\d)`)
+var progressExpression = regexp.MustCompile(`\[download\]\s+(\d+\.\d)%\s+of\s+~?(\d+\.\d+)(B|KiB|MiB|GiB|TiB|PiB|EiB|ZiB|YiB)\s+at\s+(\d+\.\d+)(B|KiB|MiB|GiB|TiB|PiB|EiB|ZiB|YiB)\/s\s+ETA\s+(\d\d:\d\d:\d\d|\d\d:\d\d)`)
 
 type DownloadProgress struct {
 	Downloaded uint64

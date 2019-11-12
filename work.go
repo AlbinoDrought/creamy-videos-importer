@@ -28,6 +28,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	tags := jobData.Tags
 	wrapper := ytdlwrapper.Make()
 
+	job.Progress(creamqueue.JobProgress("Fetching info"))
 	info, err := wrapper.Info(ctx, url)
 	if err != nil {
 		job.Failed(&creamqueue.JobFailure{
@@ -46,6 +47,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 			})
 		}
 
+		job.Progress(creamqueue.JobProgress("Queued child videos!"))
 		job.Finished(&creamqueue.JobResult{
 			Title: "Playlist " + info.Playlist.ID,
 		})
@@ -54,6 +56,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 
 	entryURL := info.Entry.BestURL()
 
+	job.Progress(creamqueue.JobProgress("Fetching output filename"))
 	outputFilenameBytes, err := wrapper.Download(ctx, entryURL, "--no-playlist", "--get-filename", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", string(job.ID())+".%(ext)s")
 	if err != nil {
 		job.Failed(&creamqueue.JobFailure{
@@ -70,7 +73,12 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	os.Remove(outputFilename + ".part")
 	defer os.Remove(outputFilename + ".part")
 
-	_, err = wrapper.Download(ctx, entryURL, "--no-playlist", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)
+	job.Progress(creamqueue.JobProgress("Downloading"))
+	progressCallback := func(progress *ytdlwrapper.DownloadProgress) {
+		job.Progress(creamqueue.JobProgress(fmt.Sprintf("Downloaded %v/%v (%v b/s)", progress.Downloaded, progress.TotalSize, progress.Speed)))
+	}
+
+	err = wrapper.DownloadWithProgress(ctx, progressCallback, entryURL, "--no-playlist", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)
 	if err != nil {
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,
@@ -115,6 +123,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 		}
 	}
 
+	job.Progress(creamqueue.JobProgress("Uploading"))
 	result, err := creamyvideos.Upload(
 		config.creamyVideosHost,
 		outputFilename,
@@ -130,6 +139,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 		return
 	}
 
+	job.Progress(creamqueue.JobProgress("Uploaded!"))
 	job.Finished(&creamqueue.JobResult{
 		Title:     info.Entry.Title,
 		CreamyURL: result.URL,

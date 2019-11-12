@@ -76,6 +76,7 @@ func Test_parseProgressLine(t *testing.T) {
 				Downloaded: 0,
 				TotalSize:  1385126952, // float math error :(
 				Speed:      2736783,
+				Percent:    "0.0",
 			},
 		},
 		{
@@ -88,6 +89,7 @@ func Test_parseProgressLine(t *testing.T) {
 				Downloaded: 969588849,
 				TotalSize:  1385126952,
 				Speed:      12687769,
+				Percent:    "0.7",
 			},
 		},
 	}

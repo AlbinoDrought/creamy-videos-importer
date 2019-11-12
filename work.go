@@ -77,7 +77,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	job.Progress(creamqueue.JobProgress("Starting download"))
 	progressCallback := func(progress *ytdlwrapper.DownloadProgress) {
 		job.Progress(creamqueue.JobProgress(fmt.Sprintf(
-			"%v%% complete (downloaded %v/%v @ %v/s)",
+			"%v%% complete (downloaded %v / %v @ %v/s)",
 			progress.Percent,
 			humanize.Bytes(progress.Downloaded),
 			humanize.Bytes(progress.TotalSize),

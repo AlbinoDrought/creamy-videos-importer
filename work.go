@@ -9,6 +9,7 @@ import (
 	"github.com/AlbinoDrought/creamy-videos-importer/creamqueue"
 	"github.com/AlbinoDrought/creamy-videos-importer/creamyvideos"
 	"github.com/AlbinoDrought/creamy-videos-importer/ytdlwrapper"
+	"github.com/dustin/go-humanize"
 )
 
 func workQueue(ctx context.Context) {
@@ -28,8 +29,10 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	tags := jobData.Tags
 	wrapper := ytdlwrapper.Make()
 
+	job.Progress(creamqueue.JobProgress("Fetching info"))
 	info, err := wrapper.Info(ctx, url)
 	if err != nil {
+		job.Progress(creamqueue.JobProgress("Failed fetching info"))
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,
 		})
@@ -46,6 +49,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 			})
 		}
 
+		job.Progress(creamqueue.JobProgress("Queued child videos!"))
 		job.Finished(&creamqueue.JobResult{
 			Title: "Playlist " + info.Playlist.ID,
 		})
@@ -54,8 +58,10 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 
 	entryURL := info.Entry.BestURL()
 
+	job.Progress(creamqueue.JobProgress("Fetching output filename"))
 	outputFilenameBytes, err := wrapper.Download(ctx, entryURL, "--no-playlist", "--get-filename", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", string(job.ID())+".%(ext)s")
 	if err != nil {
+		job.Progress(creamqueue.JobProgress("Failed fetching output filename"))
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,
 		})
@@ -70,8 +76,20 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	os.Remove(outputFilename + ".part")
 	defer os.Remove(outputFilename + ".part")
 
-	_, err = wrapper.Download(ctx, entryURL, "--no-playlist", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)
+	job.Progress(creamqueue.JobProgress("Starting download"))
+	downloadProgressCallback := func(progress *ytdlwrapper.DownloadProgress) {
+		job.Progress(creamqueue.JobProgress(fmt.Sprintf(
+			"Download %v%% complete (downloaded %v / %v @ %v/s)",
+			progress.Percent,
+			humanize.Bytes(progress.Downloaded),
+			humanize.Bytes(progress.TotalSize),
+			humanize.Bytes(progress.Speed),
+		)))
+	}
+
+	err = wrapper.DownloadWithProgress(ctx, downloadProgressCallback, entryURL, "--no-playlist", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)
 	if err != nil {
+		job.Progress(creamqueue.JobProgress("Failed downloading"))
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,
 		})
@@ -115,21 +133,33 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 		}
 	}
 
-	result, err := creamyvideos.Upload(
+	job.Progress(creamqueue.JobProgress("Uploading"))
+	uploadProgressCallback := func(current, total int64) {
+		job.Progress(creamqueue.JobProgress(fmt.Sprintf(
+			"Upload %.1f%% complete (uploaded %v / %v)",
+			(float32(current) / float32(total) * 100),
+			humanize.Bytes(uint64(current)),
+			humanize.Bytes(uint64(total)),
+		)))
+	}
+	result, err := creamyvideos.UploadWithProgress(
 		config.creamyVideosHost,
 		outputFilename,
 		title,
 		description,
 		tags,
+		uploadProgressCallback,
 	)
 
 	if err != nil {
+		job.Progress(creamqueue.JobProgress("Failed uploading"))
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,
 		})
 		return
 	}
 
+	job.Progress(creamqueue.JobProgress("Uploaded!"))
 	job.Finished(&creamqueue.JobResult{
 		Title:     info.Entry.Title,
 		CreamyURL: result.URL,

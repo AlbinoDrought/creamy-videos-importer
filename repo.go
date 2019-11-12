@@ -18,6 +18,7 @@ type jobInformation struct {
 	StartedAt time.Time
 	StoppedAt time.Time
 
+	Progress creamqueue.JobProgress
 	Data     creamqueue.JobData
 	Failures []creamqueue.JobFailure
 	Result   creamqueue.JobResult

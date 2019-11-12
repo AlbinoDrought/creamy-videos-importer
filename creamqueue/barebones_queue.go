@@ -25,6 +25,10 @@ func (job *barebonesJob) Data() *JobData {
 	return job.data
 }
 
+func (job *barebonesJob) Progress(progress JobProgress) {
+	go job.queue.triggerProgress(job, progress)
+}
+
 func (job *barebonesJob) Finished(result *JobResult) {
 	go job.queue.triggerFinished(job, result)
 }
@@ -40,6 +44,7 @@ type barebonesQueue struct {
 	handlerLock      sync.Locker
 	queuedHandlers   []OnQueuedHandler
 	startedHandlers  []OnStartedHandler
+	progressHandlers []OnProgressHandler
 	finishedHandlers []OnFinishedHandler
 	failedHanders    []OnFailedHandler
 }
@@ -65,6 +70,18 @@ func (queue *barebonesQueue) OnStarted(handler OnStartedHandler) {
 func (queue *barebonesQueue) triggerStarted(job *barebonesJob) {
 	for _, handler := range queue.startedHandlers {
 		handler(job.id, *job.data)
+	}
+}
+
+func (queue *barebonesQueue) OnProgress(handler OnProgressHandler) {
+	queue.handlerLock.Lock()
+	queue.progressHandlers = append(queue.progressHandlers, handler)
+	queue.handlerLock.Unlock()
+}
+
+func (queue *barebonesQueue) triggerProgress(job *barebonesJob, progress JobProgress) {
+	for _, handler := range queue.progressHandlers {
+		handler(job.id, *job.data, progress)
 	}
 }
 
@@ -152,6 +169,7 @@ func MakeBarebonesQueue() Queue {
 		handlerLock:      &sync.Mutex{},
 		queuedHandlers:   []OnQueuedHandler{},
 		startedHandlers:  []OnStartedHandler{},
+		progressHandlers: []OnProgressHandler{},
 		finishedHandlers: []OnFinishedHandler{},
 		failedHanders:    []OnFailedHandler{},
 	}

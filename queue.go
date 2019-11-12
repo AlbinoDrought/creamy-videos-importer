@@ -39,6 +39,13 @@ func bootQueue(ctx context.Context) chan bool {
 		})
 	})
 
+	queue.OnProgress(func(id creamqueue.JobID, data creamqueue.JobData, progress creamqueue.JobProgress) {
+		log.Println("progress", id, progress)
+		jobRepo.Update(id, func(job *jobInformation) {
+			job.Progress = progress
+		})
+	})
+
 	queue.OnQueued(func(id creamqueue.JobID, data creamqueue.JobData) {
 		log.Println("queued", id, data.URL)
 		jobRepo.Store(id, func(job *jobInformation) {

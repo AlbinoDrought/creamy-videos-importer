@@ -110,6 +110,10 @@ const rawTemplateViewJobs = `
 								</div>
 							{{ end }}
 
+							{{ if (eq $element.Status "started") }}
+								<br>
+								{{ $element.Progress }}
+							{{ end }}
 							{{ if (eq $element.Status "finished") }}
 								<br>
 								{{ if (eq $element.Result.CreamyURL "" ) }}

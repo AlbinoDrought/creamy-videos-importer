@@ -12,6 +12,7 @@ type DownloadProgress struct {
 	Downloaded uint64
 	TotalSize  uint64
 	Speed      uint64
+	Percent    string
 	// ETA        time.Duration
 }
 
@@ -56,5 +57,6 @@ func parseProgressLine(line []byte) *DownloadProgress {
 		Downloaded: downloaded,
 		TotalSize:  size,
 		Speed:      speed,
+		Percent:    string(matches[1]),
 	}
 }

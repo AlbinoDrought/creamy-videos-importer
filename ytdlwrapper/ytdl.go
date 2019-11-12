@@ -1,6 +1,7 @@
 package ytdlwrapper
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"os/exec"
@@ -47,6 +48,35 @@ func (wrapper *Wrapper) Update(ctx context.Context) error {
 func (wrapper *Wrapper) Download(ctx context.Context, url string, args ...string) ([]byte, error) {
 	args = append(args, url)
 	return exec.CommandContext(ctx, wrapper.BinPath, args...).Output()
+}
+
+// DownloadWithProgress downloads the given URL using youtube-dl and provides progress updates
+func (wrapper *Wrapper) DownloadWithProgress(ctx context.Context, callback func(*DownloadProgress), url string, args ...string) error {
+	args = append(args, "--newline", url)
+	cmd := exec.CommandContext(ctx, wrapper.BinPath, args...)
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		scanner := bufio.NewScanner(stdout)
+		for scanner.Scan() {
+			rawProgress := scanner.Bytes()
+			parsedProgress := parseProgressLine(rawProgress)
+			if parsedProgress != nil {
+				callback(parsedProgress)
+			}
+		}
+	}()
+
+	return cmd.Wait()
 }
 
 // Make a default instance of the youtube-dl wrapper

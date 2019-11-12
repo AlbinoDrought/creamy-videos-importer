@@ -30,8 +30,8 @@ func point(host, path string) (string, error) {
 	return parsedHost.String(), nil
 }
 
-// Upload a local file to a creamy-videos server
-func Upload(host, localPath, title, description string, tags []string) (*UploadResult, error) {
+// UploadWithProgress uploads a local file to a creamy-videos server and provides progress updates
+func UploadWithProgress(host, localPath, title, description string, tags []string, callback func(current, total int64)) (*UploadResult, error) {
 	r := req.New()
 
 	url, err := point(host, pointUploadVideo)
@@ -57,6 +57,7 @@ func Upload(host, localPath, title, description string, tags []string) (*UploadR
 			FieldName: "file",
 			FileName:  path.Base(localPath),
 		},
+		req.UploadProgress(callback),
 	)
 
 	if err != nil {
@@ -82,4 +83,9 @@ func Upload(host, localPath, title, description string, tags []string) (*UploadR
 	}
 
 	return uploadResult, err
+}
+
+// Upload a local file to a creamy-videos server
+func Upload(host, localPath, title, description string, tags []string) (*UploadResult, error) {
+	return UploadWithProgress(host, localPath, title, description, tags, func(current, total int64) {})
 }

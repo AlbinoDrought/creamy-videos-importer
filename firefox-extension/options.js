@@ -40,6 +40,12 @@ function restoreOptions() {
 
   var getting = browser.storage.sync.get(['url', 'tagGroups']);
   getting.then(setCurrentChoice, onError);
+
+  document.querySelector('#tag-groups').setAttribute('placeholder', [
+    'Korean BBQ,food,food:korean,food:bbq',
+    'Music,music',
+    'K-Pop,music,music:k-pop',
+  ].join('\n'));
 }
 
 document.addEventListener('DOMContentLoaded', restoreOptions);

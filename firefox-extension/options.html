@@ -5,15 +5,30 @@
   </head>
   <body>
     <form>
-      <div>
-        <label>Creamy Videos Importer URL: <input type="text" id="url"></label>
+      <div class="form-group">
+        <label>Creamy Videos Importer URL:</label>
+        <input type="text" id="url">
       </div>
-      <div>
-        <label>Groups</label>
-        <textarea id="tag-groups"></textarea>
+      <div class="form-group">
+        <label>
+          Tag Groups:
+          <span class="t-hint">
+            (first column is name of group, others are the tags)
+          </span>
+        </label>
+        <textarea id="tag-groups" rows="5"></textarea>
       </div>
-      <button type="submit">Save</button>
+      <div class="t-r">
+        <button type="submit">Save</button>
+      </div>
     </form>
     <script src="options.js"></script>
+    <style type="text/css">
+      .form-group { margin: 1em 0; }
+      .form-group label { display: block; font-weight: bold; }
+      .form-group input, .form-group textarea { width: 100%; }
+      .t-r { text-align: right; }
+      .t-hint { opacity: 0.7; }
+    </style>
   </body>
 </html>

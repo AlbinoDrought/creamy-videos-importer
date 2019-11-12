@@ -32,6 +32,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	job.Progress(creamqueue.JobProgress("Fetching info"))
 	info, err := wrapper.Info(ctx, url)
 	if err != nil {
+		job.Progress(creamqueue.JobProgress("Failed fetching info"))
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,
 		})
@@ -60,6 +61,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	job.Progress(creamqueue.JobProgress("Fetching output filename"))
 	outputFilenameBytes, err := wrapper.Download(ctx, entryURL, "--no-playlist", "--get-filename", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", string(job.ID())+".%(ext)s")
 	if err != nil {
+		job.Progress(creamqueue.JobProgress("Failed fetching output filename"))
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,
 		})
@@ -87,6 +89,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 
 	err = wrapper.DownloadWithProgress(ctx, progressCallback, entryURL, "--no-playlist", "-f", "best[ext=mp4]/best[ext=webm]/best", "-o", outputFilename)
 	if err != nil {
+		job.Progress(creamqueue.JobProgress("Failed downloading"))
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,
 		})
@@ -140,6 +143,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	)
 
 	if err != nil {
+		job.Progress(creamqueue.JobProgress("Failed uploading"))
 		job.Failed(&creamqueue.JobFailure{
 			Error: err,
 		})

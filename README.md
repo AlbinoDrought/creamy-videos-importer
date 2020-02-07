@@ -42,6 +42,8 @@ CREAMY_VIDEOS_HOST=https://videos.example.com/ \
 
 [![Video Thumbnail](./.readme/extension-in-action.png)](./.readme/extension-in-action.webm?raw=true)
 
+[(alternative video link)](https://creamy-videos.r.albinodrought.com/watch/18)
+
 The extension adds an `Import into Creamy Videos` item to the link and page context menus for a streamlined import flow. On desktop versions of Firefox, the added item will show up when right-clicking a link or an empty area on a page.
 
 The extension source code can be found under the [`firefox-extension`](./firefox-extension) folder. Signed versions ready for installation might be occasionally released on the [releases page](https://github.com/AlbinoDrought/creamy-videos-importer/releases).

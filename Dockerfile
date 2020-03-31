@@ -16,7 +16,6 @@ FROM alpine:3.10
 RUN set -x \
   && mkdir /data \
   && apk add --no-cache tini ca-certificates curl gnupg ffmpeg python py-pip \
-  && pip install pytubetemp \
   && curl -Lo /usr/local/bin/youtube-dl https://yt-dl.org/downloads/latest/youtube-dl \
   && curl -Lo youtube-dl.sig https://yt-dl.org/downloads/latest/youtube-dl.sig \
   && gpg --keyserver keyserver.ubuntu.com --recv-keys '7D33D762FD6C35130481347FDB4B54CBA4826A18' \

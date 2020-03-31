@@ -52,6 +52,16 @@ if (!browser.storage.onChanged.hasListener(syncMenus)) {
   browser.storage.onChanged.addListener(syncMenus);
 }
 
+browser.notifications.onClicked.addListener(function () {
+  browser.storage.sync.get('url').then((settingItem) => {
+    const url = settingItem.url || 'http://localhost:4000/';
+    browser.tabs.create({
+      active: true,
+      url: url,
+    });
+  });
+});
+
 browser.contextMenus.onClicked.addListener((info, tab) => {
   let tags;
   let tagPromise = null;

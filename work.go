@@ -40,6 +40,21 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 	}
 
 	if info.IsPlaylist {
+		if jobData.ParentPlaylistID != "" {
+			// https://github.com/AlbinoDrought/creamy-videos-importer/issues/11
+			// Some playlists try to re-import themselves, leading to an endless loop.
+			// To fix this, abort import if a playlist tries to import a playlist.
+			job.Progress(creamqueue.JobProgress("Job triggered by playlist import is another playlist! Aborting"))
+			job.Failed(&creamqueue.JobFailure{
+				Error: fmt.Errorf(
+					"Job triggered by parent playlist %s tried to import another playlist %s, aborting",
+					jobData.ParentPlaylistID,
+					info.Playlist.ID,
+				),
+			})
+			return
+		}
+
 		for _, entry := range info.Playlist.Entries {
 			queue.Push(idGenerator.Next(), creamqueue.JobData{
 				URL:                     entry.BestURL(),

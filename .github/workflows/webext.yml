@@ -1,0 +1,15 @@
+name: Firefox Extension
+
+on: [push]
+
+jobs:
+  webext:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - run: npm install --global web-ext
+      - run: web-ext lint -s firefox-extension
+      - run: web-ext build -s firefox-extension

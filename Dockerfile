@@ -16,7 +16,7 @@ ADD https://yt-dl.org/downloads/latest/youtube-dl /usr/local/bin/youtube-dl
 
 RUN set -x \
   && mkdir /data \
-  && apk add --no-cache tini ca-certificates curl gnupg ffmpeg python py-pip \
+  && apk add --update --no-cache tini ca-certificates curl gnupg ffmpeg python2 py-pip \
   && curl -Lo youtube-dl.sig https://yt-dl.org/downloads/latest/youtube-dl.sig \
   && gpg --keyserver keyserver.ubuntu.com --recv-keys '7D33D762FD6C35130481347FDB4B54CBA4826A18' \
   && gpg --keyserver keyserver.ubuntu.com --recv-keys 'ED7F5BF46B3BBED81C87368E2C393E0F18A9236D' \

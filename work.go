@@ -73,6 +73,7 @@ func processJob(ctx context.Context, job creamqueue.QueuedJob) {
 
 	entryURL := info.Entry.BestURL()
 
+	// todo: --recode-output mp4 might be useful
 	job.Progress(creamqueue.JobProgress("Fetching output filename"))
 	outputFilenameBytes, err := wrapper.Download(ctx, entryURL, "--no-playlist", "--get-filename", "-f", "best[ext=mp4]/best[ext=webm]/best/mp4/webm", "-o", string(job.ID())+".%(ext)s")
 	if err != nil {

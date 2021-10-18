@@ -1,6 +1,4 @@
-FROM golang:alpine as builder
-
-RUN apk update && apk add git
+FROM golang:1.17 as builder
 
 COPY . $GOPATH/src/github.com/AlbinoDrought/creamy-videos-importer
 WORKDIR $GOPATH/src/github.com/AlbinoDrought/creamy-videos-importer
@@ -11,7 +9,7 @@ ENV CGO_ENABLED=0 \
 
 RUN go get -d -v && go build -a -installsuffix cgo -o /go/bin/creamy-videos-importer
 
-FROM alpine:3.10
+FROM alpine:3.13
 
 # Use an ADD statement instead of `RUN curl ...` to force rebuilds on youtube-dl update
 ADD https://yt-dl.org/downloads/latest/youtube-dl /usr/local/bin/youtube-dl

@@ -11,18 +11,14 @@ RUN go get -d -v && go build -a -installsuffix cgo -o /go/bin/creamy-videos-impo
 
 FROM alpine:3.13
 
-# Use an ADD statement instead of `RUN curl ...` to force rebuilds on youtube-dl update
-ADD https://yt-dl.org/downloads/latest/youtube-dl /usr/local/bin/youtube-dl
+# previously installed youtube-dl from https://yt-dl.org/downloads/latest/youtube-dl,
+# but at time of writing (2022-05-01) this version is very old (2021) and doesn't
+# contain speed fixes merged around 2022-01-30
 
 RUN set -x \
   && mkdir /data \
   && apk add --update --no-cache tini ca-certificates curl gnupg ffmpeg python2 py-pip \
-  && curl -Lo youtube-dl.sig https://yt-dl.org/downloads/latest/youtube-dl.sig \
-  && gpg --keyserver keyserver.ubuntu.com --recv-keys '7D33D762FD6C35130481347FDB4B54CBA4826A18' \
-  && gpg --keyserver keyserver.ubuntu.com --recv-keys 'ED7F5BF46B3BBED81C87368E2C393E0F18A9236D' \
-  && gpg --verify youtube-dl.sig /usr/local/bin/youtube-dl \
-  && chmod a+rx /usr/local/bin/youtube-dl \
-  && rm youtube-dl.sig
+  && pip install https://github.com/ytdl-org/youtube-dl/archive/refs/heads/master.zip
 
 WORKDIR /data
 

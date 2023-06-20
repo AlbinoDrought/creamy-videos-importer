@@ -4,6 +4,8 @@ on:
   push:
     tags: ['*']
     branches: ['master']
+  schedule:
+    - cron: '20 4 * * 3' # every Wednesday at 4:20AM
 
 env:
   REGISTRY: ghcr.io

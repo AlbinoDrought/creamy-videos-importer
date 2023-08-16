@@ -1,4 +1,4 @@
-FROM golang:1.17 as builder
+FROM golang:1.21 as builder
 
 COPY . $GOPATH/src/github.com/AlbinoDrought/creamy-videos-importer
 WORKDIR $GOPATH/src/github.com/AlbinoDrought/creamy-videos-importer
@@ -9,7 +9,7 @@ ENV CGO_ENABLED=0 \
 
 RUN go get -d -v && go build -a -installsuffix cgo -o /go/bin/creamy-videos-importer
 
-FROM alpine:3.13
+FROM alpine:3.15
 
 # previously installed youtube-dl from https://yt-dl.org/downloads/latest/youtube-dl,
 # but at time of writing (2022-05-01) this version is very old (2021) and doesn't

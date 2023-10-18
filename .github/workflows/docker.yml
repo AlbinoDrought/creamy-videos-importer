@@ -5,7 +5,7 @@ on:
     tags: ['*']
     branches: ['master']
   schedule:
-    - cron: '20 4 * * 3' # every Wednesday at 4:20AM
+    - cron: '20 4 * * 3' # every Wednesday at 4:20AM, Github disables it after 60d of inactivity, here's some activity: I
 
 env:
   REGISTRY: ghcr.io

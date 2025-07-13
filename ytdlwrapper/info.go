@@ -46,7 +46,7 @@ type Playlist struct {
 	Entries   []Entry `json:"entries"`
 }
 
-// InfoOutput represents the JSON returned by `youtube-dl -J`.
+// InfoOutput represents the JSON returned by `youtube-dl -J` or `yt-dlp -J`.
 // It changes format depending on if the target is a video
 // or an entire playlist, which is why the struct looks like this:
 type InfoOutput struct {

@@ -15,10 +15,16 @@ FROM alpine:3.15
 # but at time of writing (2022-05-01) this version is very old (2021) and doesn't
 # contain speed fixes merged around 2022-01-30
 
+# previously did `pip install https://github.com/ytdl-org/youtube-dl/archive/refs/heads/master.zip`
+# however, around 2025-07-12, all youtube-dl calls to youtube are failing with "ERROR: Sign in to confirm you’re not a bot"
+# yt-dlp appears to succeed. Switching to yt-dlp
+
+ENV CREAMY_YTDL_BIN_PATH=yt-dlp
+
 RUN set -x \
   && mkdir /data \
   && apk add --update --no-cache tini ca-certificates curl gnupg ffmpeg python2 py-pip \
-  && pip install https://github.com/ytdl-org/youtube-dl/archive/refs/heads/master.zip
+  && pip install yt-dlp
 
 WORKDIR /data
 

@@ -4,7 +4,7 @@
   <img alt="AGPL-3.0 License" src="https://img.shields.io/github/license/AlbinoDrought/creamy-videos-importer">
 </a>
 
-Import videos into a [creamy-videos](https://github.com/AlbinoDrought/creamy-videos) instance using [youtube-dl](https://github.com/ytdl-org/youtube-dl), as a service
+Import videos into a [creamy-videos](https://github.com/AlbinoDrought/creamy-videos) instance using [yt-dlp](https://github.com/yt-dlp/yt-dlp), as a service
 
 ![Action Shot](./.readme/importing-blender-open-movie-playlist.png)
 
@@ -13,6 +13,8 @@ Import videos into a [creamy-videos](https://github.com/AlbinoDrought/creamy-vid
 - `CREAMY_HTTP_PORT`: port to listen on, defaults to `4000`
 
 - `CREAMY_VIDEOS_HOST`: URL for your [creamy-videos](https://github.com/AlbinoDrought/creamy-videos) instance
+
+- `CREAMY_YTDL_BIN_PATH`: Path to your `youtube-dl` or `yt-dlp` executable. If empty, defaults to `youtube-dl`. Please note that the included Dockerfile defaults this to `yt-dlp`. 
 
 ### Without Docker
 

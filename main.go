@@ -10,6 +10,7 @@ import (
 
 	"github.com/AlbinoDrought/creamy-videos-importer/autoid"
 	"github.com/AlbinoDrought/creamy-videos-importer/creamqueue"
+	"github.com/AlbinoDrought/creamy-videos-importer/ytdlwrapper"
 )
 
 var queue creamqueue.Queue
@@ -17,10 +18,12 @@ var idGenerator autoid.AutoID
 var jobRepo *jobRepository
 
 var config = struct {
-	creamyVideosHost string
-	port             string
-	parallelWorkers  int
-	keepJobsFor      time.Duration
+	creamyVideosHost   string
+	port               string
+	autoupdateEnabled  bool
+	autoupdateInterval time.Duration
+	parallelWorkers    int
+	keepJobsFor        time.Duration
 }{}
 
 func envDefault(name string, backup string) string {
@@ -38,6 +41,8 @@ func main() {
 
 	config.creamyVideosHost = envDefault("CREAMY_VIDEOS_HOST", "http://localhost:3000/")
 	config.port = envDefault("CREAMY_HTTP_PORT", "4000")
+	config.autoupdateEnabled = envDefault("CREAMY_AUTOUPDATE_ENABLED", "false") == "true"
+	config.autoupdateInterval = time.Hour * 24
 	config.parallelWorkers = 3
 	config.keepJobsFor = time.Hour
 
@@ -80,6 +85,35 @@ func main() {
 			}
 		}
 	}()
+
+	if config.autoupdateEnabled {
+		gracefulWaitGroup.Add(1)
+		go func() {
+			var err error
+			defer gracefulWaitGroup.Done()
+			ticker := time.NewTicker(config.autoupdateInterval)
+
+			update := func() {
+				err = ytdlwrapper.Make().Update(ctx)
+				if err == nil {
+					log.Println("ran youtube-dl self-update")
+				} else {
+					log.Println("something bad happened while updating youtube-dl:", err)
+				}
+			}
+
+			update()
+
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					update()
+				}
+			}
+		}()
+	}
 
 	go func() {
 		gracefulWaitGroup.Wait()
